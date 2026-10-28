@@ -62,6 +62,12 @@
     <form id="settingsForm" method="dialog">
       <div class="dialog-heading"><div><p class="eyebrow">CLOUD SYNC</p><h2>WebDAV 同步设置</h2></div><button type="button" class="icon-btn close-btn" data-close="settingsDialog" aria-label="关闭">×</button></div>
       <div class="notice"><b>安全提示</b><p>请仅连接你信任的 WebDAV 服务，并优先使用 HTTPS。密码只保存在当前页面的内存中，刷新后需要重新输入；不要把密码写进源码或分享给别人。</p></div>
+      <div class="notice"><b>坚果云文件同步（手动）</b><p>如果 WebDAV 连接失败，可导出书签 JSON 文件，将它放进坚果云同步文件夹；在另一台设备下载该文件后，再导入 MyTab。导入会替换当前设备的书签，请先备份。</p></div>
+      <div class="settings-actions">
+        <button type="button" id="exportBookmarksBtn" class="secondary-btn">导出书签 JSON</button>
+        <button type="button" id="importBookmarksBtn" class="secondary-btn">导入书签 JSON</button>
+        <input type="file" id="importBookmarksFile" accept=".json,application/json" hidden>
+      </div>
       <label>书签文件完整 URL
         <input id="davUrl" type="url" inputmode="url" placeholder="https://dav.example.com/path/mytab-bookmarks.json" autocomplete="url">
         <small>填写一个文件地址，而不是仅填写服务器根目录。服务器端需允许 GET、PUT，并正确配置 CORS。</small>

@@ -203,6 +203,56 @@
     $("settingsMessage").textContent = message;
     $("settingsMessage").className = "settings-message " + state;
   }
+  function exportBookmarks() {
+    const payload = {
+      format: "mytab-bookmarks",
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      bookmarks
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "mytab-bookmarks.json";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    showToast(`已导出 ${bookmarks.length} 个书签`);
+  }
+
+  async function importBookmarksFile(file) {
+    if (!file) return;
+    try {
+      const parsed = JSON.parse(await file.text());
+      const incoming = Array.isArray(parsed) ? parsed : parsed && parsed.bookmarks;
+      if (!Array.isArray(incoming) || !incoming.every(isValidBookmark)) {
+        throw new Error("文件格式不正确，请选择 MyTab 导出的 JSON 文件");
+      }
+      if (!confirm(`将导入 ${incoming.length} 个书签，并替换本设备当前的 ${bookmarks.length} 个书签。建议先导出备份。是否继续？`)) return;
+      bookmarks = incoming.map(item => ({
+        id: item.id || makeId(),
+        title: item.title.trim(),
+        url: normalizeUrl(item.url),
+        category: (item.category || "未分类").trim() || "未分类",
+        icon: typeof item.icon === "string" ? item.icon : ""
+      }));
+      activeCategory = "全部";
+      saveLocal();
+      setStatus("已从 JSON 导入；记得导出并同步到坚果云");
+      showToast(`已导入 ${bookmarks.length} 个书签`);
+      $("settingsMessage").textContent = `导入成功：${bookmarks.length} 个书签已保存到本设备。`;
+      $("settingsMessage").className = "settings-message success";
+    } catch (error) {
+      showToast(error.message || "导入失败");
+      $("settingsMessage").textContent = error.message || "导入失败";
+      $("settingsMessage").className = "settings-message error";
+    } finally {
+      $("importBookmarksFile").value = "";
+    }
+  }
+
   async function testDav() {
     showSettingsMessage("正在测试读取权限……");
     try {
@@ -275,6 +325,9 @@
   $("emptyAddBtn").addEventListener("click", () => openBookmarkDialog());
   $("settingsBtn").addEventListener("click", openSettings);
   $("searchInput").addEventListener("input", render);
+  $("exportBookmarksBtn").addEventListener("click", exportBookmarks);
+  $("importBookmarksBtn").addEventListener("click", () => $("importBookmarksFile").click());
+  $("importBookmarksFile").addEventListener("change", (event) => importBookmarksFile(event.target.files[0]));
   $("testDavBtn").addEventListener("click", testDav);
   $("uploadDavBtn").addEventListener("click", uploadDav);
   $("downloadDavBtn").addEventListener("click", downloadDav);
